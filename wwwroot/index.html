@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SDS Store Visualizer</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #10151a;
+            --panel: #182128;
+            --panel-strong: #202c34;
+            --line: #33434e;
+            --text: #edf3f4;
+            --muted: #9fb0b7;
+            --accent: #66d1b4;
+            --accent-soft: #193b37;
+            --warn: #f4c76b;
+            --danger: #ef8b8b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font: 14px/1.45 "Segoe UI", sans-serif;
+        }
+
+        header {
+            padding: 28px 32px 24px;
+            border-bottom: 1px solid var(--line);
+            background: linear-gradient(135deg, #162a2b, #10151a 60%);
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 25px;
+            letter-spacing: .02em;
+        }
+
+        header p {
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: minmax(280px, 34%) 1fr;
+            min-height: calc(100vh - 108px);
+        }
+
+        aside {
+            border-right: 1px solid var(--line);
+            padding: 22px;
+            background: #131b21;
+        }
+
+        section {
+            padding: 22px 28px;
+            min-width: 0;
+        }
+
+        label {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 7px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        input,
+        button,
+        select {
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            background: var(--panel);
+            color: var(--text);
+            padding: 10px 11px;
+            font: inherit;
+        }
+
+        input {
+            width: 100%;
+            min-width: 0;
+        }
+
+        button {
+            cursor: pointer;
+            background: var(--accent-soft);
+            border-color: #2f7164;
+            color: #d8fff4;
+        }
+
+        button:hover {
+            background: #225248;
+        }
+
+        .status {
+            margin: 16px 0;
+            color: var(--muted);
+            min-height: 22px;
+        }
+
+        .warning {
+            padding: 11px 12px;
+            border-left: 3px solid var(--warn);
+            background: #332b1b;
+            color: #f7dda4;
+            margin-bottom: 20px;
+        }
+
+        .error {
+            color: var(--danger);
+        }
+
+        .file-list {
+            display: grid;
+            gap: 7px;
+            margin-top: 18px;
+        }
+
+        .file {
+            width: 100%;
+            text-align: left;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            padding: 11px 12px;
+            border-radius: 5px;
+        }
+
+        .file.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .file strong {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file small {
+            color: var(--muted);
+            display: block;
+            margin-top: 3px;
+        }
+
+        .empty {
+            color: var(--muted);
+            padding: 30px 0;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+            gap: 10px;
+            margin: 18px 0 22px;
+        }
+
+        .metric {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            padding: 13px;
+            border-radius: 5px;
+        }
+
+        .metric span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 4px;
+            font-size: 18px;
+        }
+
+        .table-wrap {
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+
+        th,
+        td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            color: var(--muted);
+            background: var(--panel-strong);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        td code,
+        pre {
+            font: 12px/1.5 Consolas, monospace;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #0c1115;
+            padding: 13px;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            overflow: auto;
+        }
+
+        .section-title {
+            margin: 24px 0 10px;
+            font-size: 15px;
+        }
+
+        @media (max-width: 850px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                border-right: 0;
+                border-bottom: 1px solid var(--line);
+            }
+
+            section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>SDS Store Visualizer</h1>
+        <p>Read-only local inspection of token stores, headers, blocks, and raw bytes.</p>
+    </header>
+    <main>
+        <aside>
+            <label for="rootPath">Local folder</label>
+            <div class="controls">
+                <input id="rootPath" value="C:\\LibsLocal\\TestService" aria-label="Local folder path">
+                <button id="openButton" type="button">Open</button>
+            </div>
+            <div id="status" class="status">Choose a folder to begin.</div>
+            <div id="fileList" class="file-list">
+                <div class="empty">No store files loaded.</div>
+            </div>
+        </aside>
+        <section>
+            <div id="warning" class="warning" hidden>Files are read directly while the service may be running. Values
+                can change during a scan. Refresh before drawing conclusions.</div>
+            <div id="detail">
+                <div class="empty">Select a store file to inspect its structure.</div>
+            </div>
+        </section>
+    </main>
+    <script>
+        const state = { session: null, selectedFile: null };
+        const $ = (id) => document.getElementById(id);
+
+        function formatBytes(value) {
+            if (value < 1024) return `${value} B`;
+            if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+            return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+        }
+
+        async function request(url, options) {
+            const response = await fetch(url, options);
+            const body = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
+            return body;
+        }
+
+        function renderFiles() {
+            const files = state.session?.files || [];
+            $('fileList').innerHTML = files.length
+                ? files.map(file => `<button class="file ${file.fileId === state.selectedFile ? 'active' : ''}" data-file-id="${file.fileId}">
+            <strong>${escapeHtml(file.relativePath)}</strong>
+            <small>${escapeHtml(file.kind)} · ${formatBytes(file.sizeBytes)} · ${escapeHtml(file.decodeState)}</small>
+        </button>`).join('')
+                : '<div class="empty">No files were found.</div>';
+            document.querySelectorAll('[data-file-id]').forEach(button => button.addEventListener('click', () => selectFile(button.dataset.fileId)));
+        }
+
+        function metric(label, value) {
+            return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+        }
+
+        function renderDetail(detail) {
+            const summary = detail.summary;
+            const headers = detail.headers || [];
+            const names = detail.nameEntries || [];
+            const blocks = detail.blocks || [];
+            const diagnostics = detail.diagnostics || [];
+            const fields = header => Object.entries(header.fields || {}).map(([key, value]) => `${escapeHtml(key)}=${escapeHtml(value)}`).join('<br>');
+            $('detail').innerHTML = `
+        <h2>${escapeHtml(summary.relativePath)}</h2>
+        <div class="summary">
+            ${metric('Kind', summary.kind)}
+            ${metric('File size', formatBytes(summary.sizeBytes))}
+            ${metric('Pages', summary.pageCount)}
+            ${metric('Page size', summary.pageSize ? formatBytes(summary.pageSize) : 'unknown')}
+            ${metric('Slot size', summary.slotSize ? `${summary.slotSize} B` : 'n/a')}
+            ${metric('Payload bytes', formatBytes(summary.payloadBytes))}
+            ${metric('Allocated bytes', formatBytes(summary.allocatedBytes))}
+            ${metric('Decode', summary.decodeState)}
+        </div>
+        ${diagnostics.length ? `<h3 class="section-title">Diagnostics</h3><pre>${escapeHtml(diagnostics.map(item => `[${item.severity}] ${item.message}`).join('\n'))}</pre>` : ''}
+        ${names.length ? `<h3 class="section-title">Name entries</h3><div class="table-wrap"><table><thead><tr><th>Token</th><th>Value</th><th>State</th><th>Raw</th></tr></thead><tbody>${names.map(item => `<tr><td>${item.token}</td><td>${escapeHtml(item.value || '(empty)')}</td><td>${item.isDeleted ? 'deleted' : item.isCommitted ? 'committed' : 'empty'}</td><td><code>${escapeHtml(item.rawHex)}</code></td></tr>`).join('')}</tbody></table></div>` : ''}
+        ${headers.length ? `<h3 class="section-title">Header slots</h3><div class="table-wrap"><table><thead><tr><th>Token</th><th>Interpretation</th><th>Fields</th><th>Raw</th></tr></thead><tbody>${headers.map(item => `<tr><td>${item.token}</td><td>${escapeHtml(item.interpretation)}<br>${item.actualSize} meaningful bytes / ${summary.slotSize} byte slot</td><td>${fields(item)}</td><td><code>${escapeHtml(item.rawHex)}</code></td></tr>`).join('')}</tbody></table></div>` : ''}
+        ${blocks.length ? `<h3 class="section-title">Blocks</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>Offset</th><th>Payload</th><th>State</th><th>Next</th><th>Preview</th><th>Object</th></tr></thead><tbody>${blocks.map(item => `<tr><td>${item.sequence}</td><td>${item.offset}</td><td>${item.payloadSize} B</td><td>${item.isDeleted ? 'deleted' : 'valid'}</td><td>${item.nextOffset}</td><td><code>${escapeHtml(item.payloadPreviewHex)}</code></td><td>${escapeHtml(item.objectKey || '')}<br>${escapeHtml(item.jsonPreview || '')}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        <h3 class="section-title">Raw preview</h3><pre>${escapeHtml(detail.rawPreview.hex)}</pre>`;
+        }
+
+        async function selectFile(fileId) {
+            if (!state.session) return;
+            state.selectedFile = fileId;
+            renderFiles();
+            try {
+                const detail = await request(`/api/sessions/${state.session.sessionId}/files/${fileId}`);
+                renderDetail(detail);
+            } catch (error) {
+                $('detail').innerHTML = `<div class="error">${escapeHtml(error.message)}</div>`;
+            }
+        }
+
+        async function openFolder() {
+            $('status').textContent = 'Scanning files...';
+            $('status').className = 'status';
+            try {
+                state.session = await request('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rootPath: $('rootPath').value }) });
+                state.selectedFile = null;
+                $('warning').hidden = !state.session.liveConsistencyWarning;
+                $('status').textContent = `${state.session.fileCount} files · ${formatBytes(state.session.totalBytes)} · scanned ${new Date(state.session.scannedAt).toLocaleTimeString()}`;
+                renderFiles();
+                $('detail').innerHTML = '<div class="empty">Select a store file to inspect its structure.</div>';
+            } catch (error) {
+                $('status').textContent = error.message;
+                $('status').className = 'status error';
+            }
+        }
+
+        $('openButton').addEventListener('click', openFolder);
+        $('rootPath').addEventListener('keydown', event => { if (event.key === 'Enter') openFolder(); });
+    </script>
+</body>
+
+</html>
